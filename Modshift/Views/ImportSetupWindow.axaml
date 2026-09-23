@@ -1,0 +1,116 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Modshift.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="800" d:DesignHeight="450"
+        x:DataType="vm:ImportSetupViewModel"
+        x:Class="Modshift.Views.ImportSetupWindow"
+        Width="800" Height="450"
+        WindowStartupLocation="CenterOwner"
+        Title="📦 Создание новой сборки из папки">
+
+    <!-- Главная сетка: контент сверху, кнопки управления жестко прижаты к низу -->
+    <Grid RowDefinitions="*, Auto" Margin="20" Background="{DynamicResource SystemRegionBrush}">
+
+        <!-- ================= 1. ОСНОВНОЙ КОНТЕНТ (СКРОЛЛИРУЕМЫЙ) ================= -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+            <StackPanel Spacing="15">
+
+                <!-- Блок ввода имени и описания -->
+                <TextBlock Text="1. НАЗВАНИЕ И ОПИСАНИЕ СБОРКИ" FontWeight="Bold"
+                           Foreground="{DynamicResource SystemBaseMediumColor}" />
+                <Grid RowDefinitions="Auto, Auto" Margin="5,0,0,0">
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="Название сборки (Обязательно):" FontSize="12" Margin="0,0,0,5"
+                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+                        <TextBox Text="{Binding PackName}" Watermark="Например: Сервер Чернигов" Focusable="True" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="Описание / Заметка к профилю:" FontSize="12" Margin="0,0,0,5"
+                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+                        <TextBox Text="{Binding PackDescription}"
+                                 Watermark="Тестирую оптимизацию перед заливкой на хостинг" Height="60"
+                                 AcceptsReturn="True" />
+                    </StackPanel>
+                </Grid>
+
+                <Separator Background="{DynamicResource SystemControlTransientBorderBrush}" />
+
+                <!-- Блок характеристик -->
+                <TextBlock Text="2. ХАРАКТЕРИСТИКИ (Определено локально)" FontWeight="Bold"
+                           Foreground="{DynamicResource SystemBaseMediumColor}" />
+                <Grid ColumnDefinitions="*, *" Margin="5,0,0,0">
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Версия игры:" FontSize="12" Margin="0,0,0,5"
+                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+                        <ComboBox ItemsSource="{Binding AvailableVersions}" SelectedItem="{Binding SelectedVersion}"
+                                  HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Загрузчик модов:" FontSize="12" Margin="0,0,0,5"
+                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+                        <ComboBox ItemsSource="{Binding AvailableLoaders}" SelectedItem="{Binding SelectedLoader}"
+                                  HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Отображение пути к папке -->
+                <StackPanel Margin="5,5,0,0" Spacing="2">
+                    <TextBlock Text="Путь к папке:" FontSize="11"
+                               Foreground="{DynamicResource SystemBaseMediumLowColor}" />
+                    <TextBlock Text="{Binding ModsPath}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"
+                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                </StackPanel>
+
+                <Separator Background="{DynamicResource SystemControlTransientBorderBrush}" />
+
+                <!-- Блок списка найденных файлов -->
+                <TextBlock
+                    Text="{Binding FoundFiles.Count, StringFormat='3. НАЙДЕННЫЕ ФАЙЛЫ В ПАПКЕ (Плоский список, всего: {0})'}"
+                    FontWeight="Bold" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                <Border BorderBrush="{DynamicResource SystemControlTransientBorderBrush}" BorderThickness="1"
+                        CornerRadius="4" Background="{DynamicResource SystemControlTransientBackgroundBrush}">
+                    <ListBox ItemsSource="{Binding FoundFiles}" Height="150" Background="Transparent"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="2">
+                                    <TextBlock Text="📄" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                    <TextBlock Text="{Binding}" FontSize="13"
+                                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================= 2. НИЖНЯЯ ПАНЕЛЬ С КНОПКАМИУПРАВЛЕНИЯ ================= -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="0,15,0,0">
+            <Grid ColumnDefinitions="*, Auto, Auto">
+                <Button Grid.Column="1"
+                        Content="❌ Отмена"
+                        Command="{Binding CancelImportCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        Background="Transparent"
+                        Foreground="#F44336"
+                        Margin="0,0,10,0"
+                        Padding="15,8" />
+                <Button Grid.Column="2"
+                        Content="✔️ ИМПОРТИРОВАТЬ СБОРКУ"
+                        Command="{Binding ConfirmImportCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        Background="#4CAF50"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Padding="20,8" />
+            </Grid>
+        </Border>
+
+    </Grid>
+</Window>

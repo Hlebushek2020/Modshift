@@ -1,0 +1,16 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Modshift.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="800" d:DesignHeight="450"
+        x:DataType="vm:MainWindowViewModel"
+        x:Class="Modshift.Views.MainWindow"
+        Width="800" Height="450"
+        WindowStartupLocation="CenterScreen"
+        Title="Modshift">
+
+    <ContentControl Content="{Binding CurrentPage}" />
+
+</Window>

@@ -1,10 +1,23 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Modshift.ViewModels"
+             xmlns:views="clr-namespace:Modshift.Views"
              x:Class="Modshift.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Light">
+
+    <Application.DataTemplates>
+        <!-- Твинк-шаблон (View Locator). 
+             Говорит Avalonia: "Если в ContentControl лежит DashboardViewModel, 
+             автоматически нарисуй вместо нее DashboardView" -->
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+
+        <!-- Сюда в будущем добавятся шаблоны для WorkspaceViewModel и других экранов -->
+    </Application.DataTemplates>
 
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
+
 </Application>

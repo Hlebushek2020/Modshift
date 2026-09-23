@@ -1,0 +1,112 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Modshift.ViewModels"
+             x:DataType="vm:DashboardViewModel"
+             x:Class="Modshift.Views.DashboardView">
+    <Grid RowDefinitions="Auto, Auto, *" Margin="20">
+
+        <!-- Заголовок приложения -->
+        <TextBlock Grid.Row="0"
+                   Text="M I N E C R A F T   M O D P A C K   M I G R A T O R"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,25"
+                   Foreground="{DynamicResource SystemBaseHighColor}" /> <!-- Авто-темный текст -->
+
+        <!-- Крупная акцентная кнопка создания новой сборки -->
+        <Button Grid.Row="1"
+                Content="+ СОЗДАТЬ СБОРКУ ИЗ ПАПКИ MODS"
+                Command="{Binding OpenImportWindowCommand}"
+                Background="#2196F3"
+                Foreground="White"
+                FontWeight="Bold"
+                FontSize="14"
+                Padding="20,12"
+                HorizontalAlignment="Center"
+                CornerRadius="5"
+                Margin="0,0,0,20" />
+
+        <!-- Список сохраненных сборок -->
+        <Grid Grid.Row="2" RowDefinitions="Auto, *">
+
+            <!-- Серый текст для подзаголовков -->
+            <TextBlock Grid.Row="0"
+                       Text="МОИ СОХРАНЕННЫЕ СБОРКИ"
+                       FontSize="14"
+                       Foreground="{DynamicResource SystemBaseMediumColor}"
+                       Margin="0,0,0,10" />
+
+            <!-- Список карточек -->
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding SavedProfiles}"
+                     Background="Transparent"
+                     BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProfileCardViewModel">
+
+                        <!-- СВЕТЛАЯ КАРТОЧКА: Использует ресурсы Fluent Theme -->
+                        <Border Background="{DynamicResource SystemRegionBrush}"
+                                CornerRadius="6"
+                                Padding="15"
+                                Margin="0,0,0,10"
+                                BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                                BorderThickness="1"
+                                BoxShadow="0 2 4 0 #10000000"> <!-- Мягкая светлая тень -->
+                            <Grid ColumnDefinitions="*, Auto">
+
+                                <!-- Левая часть: Информация -->
+                                <StackPanel Grid.Column="0" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="📦" FontSize="16" />
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="Bold"
+                                                   FontSize="16"
+                                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+
+                                        <!-- Бэджи версии и лоадера -->
+                                        <Border Background="#4CAF50" CornerRadius="3" Padding="6,2">
+                                            <TextBlock Text="{Binding Loader}" FontSize="11" Foreground="White"
+                                                       FontWeight="Bold" />
+                                        </Border>
+                                        <Border Background="#E0E0E0" CornerRadius="3" Padding="6,2">
+                                            <TextBlock Text="{Binding Version}" FontSize="11" Foreground="#333333" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding Path}" FontSize="12"
+                                               Foreground="{DynamicResource SystemBaseMediumLowColor}" />
+                                    <TextBlock Text="{Binding Description}" FontSize="13"
+                                               Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,5,0,0"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!-- Правая часть: Кнопки управления -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                            Spacing="10">
+                                    <Button Content="ОТКРЫТЬ СБОРКУ"
+                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenProfileCommand}"
+                                            CommandParameter="{Binding}"
+                                            Background="#4CAF50"
+                                            Foreground="White"
+                                            FontWeight="Bold"
+                                            Padding="15,8" />
+
+                                    <Button Content="❌"
+                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).DeleteProfileCommand}"
+                                            CommandParameter="{Binding}"
+                                            Background="Transparent"
+                                            Foreground="#F44336" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+        </Grid>
+
+    </Grid>
+</UserControl>
