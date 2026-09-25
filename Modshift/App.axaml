@@ -18,6 +18,15 @@
             <views:WorkspaceView />
         </DataTemplate>
 
+        <!-- ИСПРАВЛЕНО: Добавлены шаблоны шагов мастера миграции -->
+        <DataTemplate DataType="{x:Type vm:AnalysisStepViewModel}">
+            <views:AnalysisStepView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ExecutionStepViewModel}">
+            <views:ExecutionStepView />
+        </DataTemplate>
+
         <!-- Сюда в будущем добавятся шаблоны для WorkspaceViewModel и других экранов -->
     </Application.DataTemplates>
 

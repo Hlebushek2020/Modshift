@@ -1,0 +1,57 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Modshift.ViewModels"
+             mc:Ignorable="d"
+             d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:ExecutionStepViewModel"
+             x:Class="Modshift.Views.ExecutionStepView">
+    <Grid RowDefinitions="Auto, Auto, Auto, *" Margin="10,0,10,0">
+
+        <TextBlock Grid.Row="0" Text="МАСТЕР ПЕРЕНОСА СБОРКИ (Шаг 2 из 2)" FontSize="16" FontWeight="Bold"
+                   Foreground="#4CAF50" Margin="0,0,0,15" />
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,15" Spacing="5">
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Grid.Column="0" Text="{Binding CurrentOperationText}" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemBaseHighColor}" />
+                <TextBlock Grid.Column="1" Text="{Binding TotalProgressText}" FontSize="13"
+                           Foreground="{DynamicResource SystemBaseMediumColor}" />
+            </Grid>
+            <ProgressBar Value="{Binding TotalProgressValue}" Maximum="100" Height="10" Background="#E0E0E0"
+                         Foreground="#4CAF50" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,15" Spacing="5" IsVisible="{Binding IsDownloadingFile}">
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Grid.Column="0" Text="{Binding DownloadingFileName}" FontSize="12"
+                           Foreground="{DynamicResource SystemBaseMediumColor}" />
+                <TextBlock Grid.Column="1" Text="{Binding DownloadSpeedText}" FontSize="12"
+                           Foreground="{DynamicResource SystemBaseMediumLowColor}" />
+            </Grid>
+            <ProgressBar Value="{Binding CurrentFileProgressValue}" Maximum="100" Height="6" Background="#E0E0E0"
+                         Foreground="#2196F3" />
+        </StackPanel>
+
+        <Grid Grid.Row="3" RowDefinitions="Auto, *">
+            <TextBlock Grid.Row="0" Text="Лог сборщика:" FontSize="12"
+                       Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,0,0,5" />
+            <Border Grid.Row="1"
+                    BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Background="{DynamicResource SystemControlTransientBackgroundBrush}">
+                <TextBox Text="{Binding LogOutput}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         FontFamily="Consolas, Courier New, Monospace"
+                         FontSize="12"
+                         Background="Transparent"
+                         BorderThickness="0" />
+            </Border>
+        </Grid>
+
+    </Grid>
+</UserControl>

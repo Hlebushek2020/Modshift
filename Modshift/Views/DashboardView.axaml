@@ -7,14 +7,29 @@
              x:Class="Modshift.Views.DashboardView">
     <Grid RowDefinitions="Auto, Auto, *" Margin="20">
 
-        <!-- Заголовок приложения -->
-        <TextBlock Grid.Row="0"
-                   Text="M I N E C R A F T   M O D P A C K   M I G R A T O R"
-                   FontSize="22"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center"
-                   Margin="0,0,0,25"
-                   Foreground="{DynamicResource SystemBaseHighColor}" /> <!-- Авто-темный текст -->
+        <!-- Переписываем строку 0 главного Grid на Dashboard -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,25">
+
+            <!-- Заголовок по центру -->
+            <TextBlock Grid.Column="0"
+                       Text="M I N E C R A F T   M O D P A C K   M I G R A T O R"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="40,0,0,0"
+                       Foreground="{DynamicResource SystemBaseHighColor}" />
+
+            <!-- Маленькая аккуратная кнопка настроек справа -->
+            <Button Grid.Column="1"
+                    Content="⚙️"
+                    Command="{Binding OpenSettingsCommand}"
+                    FontSize="16"
+                    Background="Transparent"
+                    Foreground="{DynamicResource SystemBaseMediumColor}"
+                    Padding="8"
+                    VerticalAlignment="Center" />
+        </Grid>
 
         <!-- Крупная акцентная кнопка создания новой сборки -->
         <Button Grid.Row="1"

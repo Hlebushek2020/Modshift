@@ -31,6 +31,23 @@ public partial class DashboardViewModel : ObservableObject
         LoadSavedProfilesMock();
     }
 
+
+    [RelayCommand]
+    private async Task OpenSettingsAsync()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
+            desktop.MainWindow == null) return;
+
+        var settingsVm = new SettingsViewModel();
+        var settingsWindow = new SettingsWindow
+        {
+            DataContext = settingsVm
+        };
+
+        // Открываем модально поверх главного окна
+        await settingsWindow.ShowDialog(desktop.MainWindow);
+    }
+
     [RelayCommand]
     private async Task OpenImportWindowAsync()
     {
@@ -91,10 +108,10 @@ public partial class DashboardViewModel : ObservableObject
     private void OpenProfile(ProfileCardViewModel? profile)
     {
         if (profile == null) return;
-    
+
         // 1. Создаем ViewModel для рабочего пространства и передаем туда данные выбранного профиля
-        var workspaceVm = new WorkspaceViewModel(_mainNavigation, profile);
-    
+        var workspaceVm = new WorkspaceViewModel(_mainNavigation, this, profile);
+
         // 2. Даем команду Главному окну переключить центральную область на этот экран
         _mainNavigation.NavigateTo(workspaceVm);
     }
@@ -105,6 +122,20 @@ public partial class DashboardViewModel : ObservableObject
 
         // Удаляем только из списка программы (из app_config.json), файлы на диске не трогаем
         SavedProfiles.Remove(profile);
+    }
+
+    /// <summary>
+    /// Регистрирует новую сборку, созданную в результате миграции
+    /// </summary>
+    public void AddNewProfileFromMigration(ProfileCardViewModel newProfile)
+    {
+        // 1. Добавляем в глобальный список (XAML Dashboard сразу увидит ее)
+        RefreshProfiles(newProfile);
+
+        // 2. В будущем здесь будет вызов ModpackConfigService для записи в app_config.json
+
+        // 3. Автоматически возвращаем пользователя на начальный экран, чтобы он увидел результат
+        _mainNavigation.NavigateTo(this);
     }
 
     private void LoadSavedProfilesMock()

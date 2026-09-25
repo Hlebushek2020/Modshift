@@ -1,0 +1,48 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Modshift.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="800" d:DesignHeight="450"
+        x:DataType="vm:MigrationWizardViewModel"
+        x:Class="Modshift.Views.MigrationWizardWindow"
+        Title="🚀 Мастер переноса сборки на новую версию">
+    <Grid RowDefinitions="*, Auto" Margin="20" Background="{DynamicResource SystemRegionBrush}">
+
+        <!-- Область шагов миграции -->
+        <ContentControl Grid.Row="0" Content="{Binding CurrentStep}" />
+
+        <!-- Нижняя панель управления навигацией -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="0,15,0,0">
+            <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+
+                <Button Grid.Column="0"
+                        Content="❌ Отмена"
+                        Command="{Binding CancelWizardCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        Background="Transparent"
+                        Foreground="#F44336"
+                        Padding="15,8" />
+
+                <Button Grid.Column="2"
+                        Content="⬅️ НАЗАД"
+                        Command="{Binding GoBackStepCommand}"
+                        Background="Transparent"
+                        Foreground="{DynamicResource SystemBaseHighColor}"
+                        Margin="0,0,10,0"
+                        Padding="15,8" />
+
+                <Button Grid.Column="3"
+                        Content="{Binding NextButtonText}"
+                        Command="{Binding GoNextStepCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        Background="#4CAF50"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Padding="20,8" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

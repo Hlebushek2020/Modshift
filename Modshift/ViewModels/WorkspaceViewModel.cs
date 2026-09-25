@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using Avalonia.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Modshift.Views;
 
 namespace Modshift.ViewModels;
 
 public partial class WorkspaceViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainNavigation;
+    private readonly DashboardViewModel _dashboardViewModel;
 
     [ObservableProperty]
     private string _profileName = string.Empty;
@@ -34,9 +36,13 @@ public partial class WorkspaceViewModel : ObservableObject
 
     public bool IsModSelected => SelectedMod != null;
 
-    public WorkspaceViewModel(MainWindowViewModel mainNavigation, ProfileCardViewModel profile)
+    public WorkspaceViewModel(
+        MainWindowViewModel mainNavigation,
+        DashboardViewModel dashboardViewModel,
+        ProfileCardViewModel profile)
     {
         _mainNavigation = mainNavigation;
+        _dashboardViewModel = dashboardViewModel;
         ProfileName = profile.Name;
         CurrentVersion = profile.Version;
 
@@ -74,7 +80,7 @@ public partial class WorkspaceViewModel : ObservableObject
     [RelayCommand]
     private void GoBack()
     {
-        _mainNavigation.NavigateTo(new DashboardViewModel(_mainNavigation));
+        _mainNavigation.NavigateTo(_dashboardViewModel);
     }
 
     [RelayCommand]
@@ -86,7 +92,18 @@ public partial class WorkspaceViewModel : ObservableObject
     [RelayCommand]
     private async Task RunMigrationWizardAsync()
     {
-        await Task.CompletedTask;
+        if (App.Current?.ApplicationLifetime is not
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop) return;
+
+        var wizardVm = new MigrationWizardViewModel(SelectedTargetVersion, SelectedTargetLoader);
+        var wizardWindow = new MigrationWizardWindow { DataContext = wizardVm };
+
+        await wizardWindow.ShowDialog(desktop.MainWindow!);
+
+        if (wizardVm.IsMigrationSuccessful && wizardVm.MigratedProfile != null)
+        {
+            _dashboardViewModel.AddNewProfileFromMigration(wizardVm.MigratedProfile);
+        }
     }
 }
 
