@@ -13,11 +13,18 @@
             <views:DashboardView />
         </DataTemplate>
 
+        <!-- ИСПРАВЛЕНО: Добавлен шаблон для второй страницы (Рабочее пространство) -->
+        <DataTemplate DataType="{x:Type vm:WorkspaceViewModel}">
+            <views:WorkspaceView />
+        </DataTemplate>
+
         <!-- Сюда в будущем добавятся шаблоны для WorkspaceViewModel и других экранов -->
     </Application.DataTemplates>
 
     <Application.Styles>
         <FluentTheme />
+        <!-- ОБЯЗАТЕЛЬНО: Подключаем стили для таблицы, чтобы она знала, как выглядеть в светлой теме -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     </Application.Styles>
 
 </Application>

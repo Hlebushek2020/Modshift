@@ -1,0 +1,149 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Modshift.ViewModels"
+             mc:Ignorable="d"
+             d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:WorkspaceViewModel"
+             x:Class="Modshift.Views.WorkspaceView">
+    <Grid RowDefinitions="Auto, *, Auto" Margin="20">
+
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ: Навигация назад -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,15">
+            <Button Grid.Column="0"
+                    Content="⬅️ НАЗАД К СПИСКУ СБОРК"
+                    Command="{Binding GoBackCommand}"
+                    Background="Transparent"
+                    Foreground="{DynamicResource SystemBaseHighColor}"
+                    Padding="10,6" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center"
+                        Spacing="10">
+                <TextBlock Text="СБОРКА:" FontSize="16" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                <TextBlock Text="{Binding ProfileName}" FontSize="16" FontWeight="Bold"
+                           Foreground="{DynamicResource SystemBaseHighColor}" />
+                <Border Background="#E0E0E0" CornerRadius="3" Padding="6,2">
+                    <TextBlock Text="{Binding CurrentVersion}" FontSize="11" Foreground="#333333" FontWeight="Bold" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ: Таблица и свойства -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, 320" Margin="0,0,0,15">
+
+            <!-- Левая зона: Скелет таблицы модов -->
+            <Border Grid.Column="0"
+                    BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="5"
+                    Margin="0,0,15,0"
+                    Padding="5"
+                    Background="{DynamicResource SystemRegionBrush}">
+                <Grid RowDefinitions="Auto, *">
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="5,5,5,10">
+                        <Button Content="➕ ДОБАВИТЬ МОД (.jar)" IsEnabled="False" />
+                        <Button Content="🗑️ ВЫБРОСИТЬ ИЗ СБОРКИ" IsEnabled="False" />
+                        <Button Content="🔍 ПОЛУЧИТЬ СВЕДЕНИЯ ИЗ API" Command="{Binding FetchApiDataCommand}"
+                                Background="#9C27B0" Foreground="White" FontWeight="Bold" />
+                    </StackPanel>
+
+                    <!-- Чистый бесплатный DataGrid. Мы просто убрали блок GroupStyle из XAML. 
+                        Avalonia сама нарисует стандартные шапки групп в светлой теме, 
+                        основываясь на свойстве ParentGroupName во ViewModel. -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding ModItemsView}"
+                              SelectedItem="{Binding SelectedMod}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              GridLinesVisibility="Horizontal">
+
+                        <!-- Идеально ровные сквозные колонки для всех файлов -->
+                        <DataGrid.Columns>
+
+                            <!-- Колонка 1: Имя файла с иконкой (Основной мод или библиотека) -->
+                            <DataGridTemplateColumn Header="Имя файла / Библиотеки" Width="2*">
+                                <DataTemplate x:DataType="vm:ModTableItemViewModel">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="5,0,0,0">
+                                        <!-- Иконка подменяется сама на C# уровне (📦 или 🛠️) -->
+                                        <TextBlock Text="{Binding Icon}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Колонка 2: Тип файла (Переделана на безопасный Template) -->
+                            <DataGridTemplateColumn Header="Тип файла" Width="1*">
+                                <DataTemplate x:DataType="vm:ModTableItemViewModel">
+                                    <TextBlock Text="{Binding TypeDescription}" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Колонка 3: Короткая заметка (Переделана на безопасный Template) -->
+                            <DataGridTemplateColumn Header="Заметка" Width="2*">
+                                <DataTemplate x:DataType="vm:ModTableItemViewModel">
+                                    <TextBlock Text="{Binding ShortComment}" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Правая зона: Свойства мода (Заблокирована в первой версии) -->
+            <Border Grid.Column="1"
+                    Background="{DynamicResource SystemControlTransientBackgroundBrush}"
+                    BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="5"
+                    Padding="15">
+                <Grid RowDefinitions="Auto, Auto, *, Auto" IsEnabled="False" Opacity="0.6">
+                    <TextBlock Grid.Row="0" Text="{Binding SelectedMod.DisplayName, FallbackValue='Мод не выбран'}"
+                               FontSize="15" FontWeight="Bold" Margin="0,0,0,15" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                    <CheckBox Grid.Row="1" Content="Заморозить обновление (Pin)"
+                              IsChecked="{Binding SelectedMod.IsPinned}" Margin="0,0,0,10" />
+                    <StackPanel Grid.Row="2" Spacing="5" Margin="0,0,0,15">
+                        <TextBlock Text="Заметка / Комментарий:" FontSize="12"
+                                   Foreground="{DynamicResource SystemBaseMediumColor}" />
+                        <TextBox Height="80" AcceptsReturn="True" Watermark="Доступно во 2-й версии..." />
+                        <TextBlock Text="Связанные конфиги:" FontSize="12"
+                                   Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,10,0,0" />
+                        <ListBox Height="80" Background="{DynamicResource SystemRegionBrush}" CornerRadius="3" />
+                    </StackPanel>
+                    <Button Grid.Row="3" Content="Сохранить изменения" HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center" Background="#4CAF50" Foreground="White" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- НИЖНЯЯ ПАНЕЛЬ: Перенос -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SystemControlTransientBackgroundBrush}"
+                BorderBrush="{DynamicResource SystemControlTransientBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="5"
+                Padding="15">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                    <TextBlock Text="🚀 ПЕРЕНОС СБОРКИ НА НОВУЮ ВЕРСИЮ" FontWeight="Bold" VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                    <TextBlock Text="Целевая версия:" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"
+                               Foreground="{DynamicResource SystemBaseMediumColor}" />
+                    <ComboBox Width="110" ItemsSource="{Binding TargetVersions}"
+                              SelectedItem="{Binding SelectedTargetVersion}" />
+                    <ComboBox Width="110" ItemsSource="{Binding TargetLoaders}"
+                              SelectedItem="{Binding SelectedTargetLoader}" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="ЗАПУСТИТЬ МАСТЕР МИГРАЦИИ"
+                        Command="{Binding RunMigrationWizardCommand}" Background="#4CAF50" Foreground="White"
+                        FontWeight="Bold" Padding="20,10" CornerRadius="4" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

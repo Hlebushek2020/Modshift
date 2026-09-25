@@ -19,14 +19,12 @@ public partial class DashboardViewModel : ObservableObject
     // Список карточек сборок для отображения в ListBox
     public ObservableCollection<ProfileCardViewModel> SavedProfiles { get; } = new();
 
-    public ICommand OpenProfileCommand { get; }
     public ICommand DeleteProfileCommand { get; }
 
     public DashboardViewModel(MainWindowViewModel mainNavigation)
     {
         _mainNavigation = mainNavigation;
 
-        OpenProfileCommand = new RelayCommand<ProfileCardViewModel>(OpenProfile);
         DeleteProfileCommand = new RelayCommand<ProfileCardViewModel>(DeleteProfile);
 
         // В реальном коде здесь будет вызов загрузки из app_config.json через ModpackConfigService
@@ -89,12 +87,16 @@ public partial class DashboardViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
     private void OpenProfile(ProfileCardViewModel? profile)
     {
         if (profile == null) return;
-
-        // Переключаем центральную область главного окна на рабочий экран выбранной сборки (WorkspaceView)
-        // _mainNavigation.NavigateTo(new WorkspaceViewModel(_mainNavigation, profile.Path));
+    
+        // 1. Создаем ViewModel для рабочего пространства и передаем туда данные выбранного профиля
+        var workspaceVm = new WorkspaceViewModel(_mainNavigation, profile);
+    
+        // 2. Даем команду Главному окну переключить центральную область на этот экран
+        _mainNavigation.NavigateTo(workspaceVm);
     }
 
     private void DeleteProfile(ProfileCardViewModel? profile)
