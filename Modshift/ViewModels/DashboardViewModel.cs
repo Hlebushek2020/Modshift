@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Modshift.Models;
 using Modshift.Views;
 
 namespace Modshift.ViewModels;
@@ -172,4 +174,7 @@ public partial class ProfileCardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _description = string.Empty;
+
+    [ObservableProperty]
+    private List<LocalModInfo> _mods;
 }

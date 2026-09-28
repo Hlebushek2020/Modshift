@@ -20,6 +20,8 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <PackageReference Include="Modrinth.Net" Version="3.8.0" />
+        <PackageReference Include="Tomlyn" Version="2.10.1" />
     </ItemGroup>
 
     <ItemGroup>

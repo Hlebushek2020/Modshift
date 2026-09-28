@@ -72,7 +72,7 @@
                     FontWeight="Bold" Foreground="{DynamicResource SystemBaseMediumColor}" />
                 <Border BorderBrush="{DynamicResource SystemControlTransientBorderBrush}" BorderThickness="1"
                         CornerRadius="4" Background="{DynamicResource SystemControlTransientBackgroundBrush}">
-                    <ListBox ItemsSource="{Binding FoundFiles}" Height="150" Background="Transparent"
+                    <ListBox ItemsSource="{Binding FoundFiles}" MinHeight="150" Background="Transparent"
                              BorderThickness="0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>

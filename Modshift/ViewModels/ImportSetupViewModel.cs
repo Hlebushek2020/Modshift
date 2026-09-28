@@ -1,8 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Modshift.Models;
+using Modshift.Services;
 
 namespace Modshift.ViewModels;
 
@@ -24,6 +27,8 @@ public partial class ImportSetupViewModel : ObservableObject
 
     [ObservableProperty]
     private string _modsPath = string.Empty;
+
+    public List<LocalModInfo> _mods;
 
     // Списки версий и загрузчиков для выпадающих меню (ComboBox)
     public ObservableCollection<string> AvailableVersions { get; } =
@@ -53,21 +58,26 @@ public partial class ImportSetupViewModel : ObservableObject
     {
         if (!Directory.Exists(ModsPath)) return;
 
-        try
-        {
-            var files = Directory.GetFiles(ModsPath, "*.jar")
-                .Select(Path.GetFileName)
-                .Where(name => name != null);
+        // Вызываем синглтон или новый инстанс сканера Model-слоя
+        var scanner = new LocalJarScanner();
+        var analysis = scanner.ScanModsFolder(ModsPath);
 
-            foreach (var file in files)
-            {
-                FoundFiles.Add(file!);
-            }
-        }
-        catch (System.Exception ex)
+        // Автоматически выставляем определенные лоадер и версию на экране!
+        SelectedVersion = AvailableVersions.Contains(analysis.DetectedVersion)
+            ? analysis.DetectedVersion
+            : AvailableVersions.FirstOrDefault() ?? "1.20.1-A";
+
+        SelectedLoader = AvailableLoaders.Contains(analysis.DetectedLoader)
+            ? analysis.DetectedLoader
+            : AvailableLoaders.FirstOrDefault() ?? "Fabric-A";
+
+        // Наполняем плоский список файлов для отображения пользователю
+        foreach (var mod in analysis.Mods)
         {
-            System.Diagnostics.Debug.WriteLine($"[Modshift] Ошибка локального чтения папки: {ex.Message}");
+            FoundFiles.Add($"{mod.DisplayName} ({mod.FileName}) — ID: {mod.ModId}");
         }
+
+        _mods = analysis.Mods;
     }
 
     // Условие активности зеленой кнопки: поле имени не должно быть пустым или состоять из пробелов
@@ -89,7 +99,8 @@ public partial class ImportSetupViewModel : ObservableObject
             Path = ModsPath,
             Version = SelectedVersion,
             Loader = SelectedLoader,
-            Description = PackDescription.Trim()
+            Description = PackDescription.Trim(),
+            Mods = _mods
         };
 
         // Закрываем окно через переданный параметр типа Window
