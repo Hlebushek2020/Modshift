@@ -29,7 +29,7 @@ public static class PathDirectoryService
     {
         try
         {
-            string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
             if (!string.IsNullOrWhiteSpace(baseFolder))
             {
