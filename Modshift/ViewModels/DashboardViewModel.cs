@@ -98,7 +98,9 @@ public partial class DashboardViewModel : ObservableObject
         if (importViewModel.IsImportConfirmed)
         {
             // Перезагружаем список профилей на Dashboard
-            AddNewProfile(importViewModel.ResultingProfile);
+
+            // 1. Добавляем в глобальный список (XAML Dashboard сразу увидит ее)
+            RefreshProfiles(importViewModel.ResultingProfile);
         }
     }
 
@@ -133,38 +135,14 @@ public partial class DashboardViewModel : ObservableObject
         SavedProfiles.Remove(profile);
     }
 
-    private void AddNewProfile(ProfileCardViewModel newProfile)
-    {
-        // 1. Если у карточки еще нет ID (например, только что создана в окне импорта), генерируем его
-        if (newProfile.Id == Guid.Empty)
-        {
-            newProfile.Id = Guid.NewGuid();
-        }
-
-        // 2. Переносим данные из ViewModel в чистую бизнес-модель для сохранения
-        var modelToSave = new ModpackProfile
-        {
-            Id = newProfile.Id,
-            Name = newProfile.Name,
-            ModsFolderPath = newProfile.Path,
-            Version = newProfile.Version,
-            Loader = newProfile.Loader,
-            Description = newProfile.Description
-        };
-
-        // 3. Просим сервис физически создать отдельный .json файл на диске
-        _configService.SaveProfile(modelToSave);
-
-        // 1. Добавляем в глобальный список (XAML Dashboard сразу увидит ее)
-        RefreshProfiles(newProfile);
-    }
 
     /// <summary>
     /// Регистрирует новую сборку, созданную в результате миграции
     /// </summary>
     public void AddNewProfileFromMigration(ProfileCardViewModel newProfile)
     {
-        AddNewProfile(newProfile);
+        // 1. Добавляем в глобальный список (XAML Dashboard сразу увидит ее)
+        RefreshProfiles(newProfile);
 
         // 3. Автоматически возвращаем пользователя на начальный экран, чтобы он увидел результат
         _mainNavigation.NavigateTo(this);
@@ -224,7 +202,4 @@ public partial class ProfileCardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _description = string.Empty;
-
-    [ObservableProperty]
-    private List<LocalModInfo> _mods;
 }

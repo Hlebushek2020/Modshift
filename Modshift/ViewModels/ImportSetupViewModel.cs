@@ -90,20 +90,60 @@ public partial class ImportSetupViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConfirmImport))]
     private void ConfirmImport(object? window)
     {
-        IsImportConfirmed = true;
+        // 1. Создаем уникальный идентификатор для изолированной папки профиля
+        var newProfileId = System.Guid.NewGuid();
 
-        // Формируем карточку, которая вернется в общий список сборок
-        ResultingProfile = new ProfileCardViewModel
+        // 2. Инициализируем файловый сервис слоя Model
+        var configService = new ModpackConfigService();
+
+        // 3. Переносим результаты предварительного сканирования папки в формат сохранения
+        var baseModsList = new List<SavedModMetadata>();
+
+        // FoundFiles теперь хранит объекты LocalModInfo, полученные от LocalJarScanner
+        foreach (var localMod in _mods)
         {
+            baseModsList.Add(
+                new SavedModMetadata
+                {
+                    FileName = localMod.FileName,
+                    ModId = localMod.ModId,
+                    DisplayName = localMod.DisplayName,
+                    ModVersion = localMod.ModVersion,
+                    Loader = localMod.Loader,
+                    ApiStatusComment = "⚪ Сведения из API ещё не запрашивались",
+                    DownloadUrl = null,
+                    FileHash = string.Empty, // Хэш пустой, посчитаем его только при первом клике на FetchApiData
+                });
+        }
+
+        // 4. Формируем полноценную бизнес-модель для сохранения
+        var newProfileModel = new ModpackProfile
+        {
+            Id = newProfileId,
             Name = PackName.Trim(),
-            Path = ModsPath,
             Version = SelectedVersion,
             Loader = SelectedLoader,
+            ModsFolderPath = ModsPath,
             Description = PackDescription.Trim(),
-            Mods = _mods
+            CachedMods = baseModsList // Зашиваем базовый слепок файлов модов
         };
 
-        // Закрываем окно через переданный параметр типа Window
+        // 5. Физически создаем папку и пишем profile.json на диск в AppData\Local
+        configService.SaveProfile(newProfileModel);
+
+        // 6. Формируем результирующую легкую карточку-черновик для главного экрана Dashboard
+        ResultingProfile = new ProfileCardViewModel
+        {
+            Id = newProfileModel.Id, // Передаем сгенерированный Guid в UI
+            Name = newProfileModel.Name,
+            Path = newProfileModel.ModsFolderPath,
+            Version = newProfileModel.Version,
+            Loader = newProfileModel.Loader,
+            Description = newProfileModel.Description
+        };
+
+        IsImportConfirmed = true;
+
         if (window is Avalonia.Controls.Window avaloniaWindow)
         {
             avaloniaWindow.Close();

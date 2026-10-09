@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -65,39 +66,23 @@ public partial class WorkspaceViewModel : ObservableObject
     {
         _rawMods.Clear();
 
-        if (_profile.Name.Equals("Сервер Чернигов"))
+        var configService = new ModpackConfigService(); // Добавляем сервис конфигураций
+
+        // Читаем текущий снимок профиля с диска, чтобы получить доступ к старому кэшу модов
+        var currentProfile = configService.LoadProfileById(_profile.Id);
+        if (currentProfile == null) return;
+
+
+        foreach (SavedModMetadata localModInfo in currentProfile.CachedMods)
         {
             _rawMods.Add(
-                new ModTableItemViewModel("sodium-fabric-0.5.8.jar", "Основной мод", "Нужен для FPS", "Sodium", true));
-            _rawMods.Add(
                 new ModTableItemViewModel(
-                    "fabric-api-0.92.0.jar",
-                    "Системная библиотека",
-                    "Авто-определение",
-                    "Sodium",
-                    false));
-            _rawMods.Add(
-                new ModTableItemViewModel("iris-mc1.20.1-1.7.0.jar", "Основной мод", "Шейдеры", "Iris Shaders", true));
-            _rawMods.Add(
-                new ModTableItemViewModel(
-                    "cloth-config-11.1.118.jar",
+                    localModInfo.FileName,
+                    localModInfo.DisplayName,
                     "Основной мод",
                     "Локальный файл",
-                    "Cloth Config",
-                    true));
-        }
-        else
-        {
-            foreach (LocalModInfo localModInfo in _profile.Mods)
-            {
-                _rawMods.Add(
-                    new ModTableItemViewModel(
-                        localModInfo.DisplayName,
-                        "Основной мод",
-                        "Локальный файл",
-                        localModInfo.ModId,
-                        true) { TechnicalModId = localModInfo.ModId });
-            }
+                    localModInfo.ModId,
+                    true) { TechnicalModId = localModInfo.ModId });
         }
     }
 
@@ -118,38 +103,76 @@ public partial class WorkspaceViewModel : ObservableObject
 
         var hashCalculator = new ModHashCalculator();
         var apiService = new ModrinthMigrationService();
+        var configService = new ModpackConfigService(); // Подключаем сервис для работы с диском
+
+        // ЗАМЕЧАНИЕ 2: Читаем текущий снимок профиля с диска по его Guid
+        var currentProfile = configService.LoadProfileById(_profile.Id);
+        if (currentProfile == null) return;
+
+        // СВЯЗЫВАНИЕ ПО ID: Строим карту существующего кэша по техническому ID мода: [TechnicalModId] -> [Данные кэша]
+        var existingCacheMap = currentProfile.CachedMods
+            .Where(m => !string.IsNullOrEmpty(m.ModId))
+            .GroupBy(m => m.ModId)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var jarFiles = Directory.GetFiles(_profile.Path, "*.jar");
         var hashesList = new List<string>();
+
+        // Карта связи: [Хэш] -> [Строка таблицы во ViewModel]
         var hashToModItemMap = new Dictionary<string, ModTableItemViewModel>();
+
+        // Временная карта для сохранения вычисленных/взятых из кэша хэшей в рамках этой сессии
+        // Карта связи: [TechnicalModId] -> [Вычисленный или взятый из кэша Хэш]
+        var fileToHashMap = new Dictionary<string, string>();
 
         // 1. Асинхронно вычисляем хэши и связываем их со строками нашей таблицы
         foreach (var jarPath in jarFiles)
         {
             string fileName = Path.GetFileName(jarPath);
-            string? hash = await hashCalculator.CalculateSha512Async(jarPath);
+
+            // Ищем соответствующий элемент в нашей оперативной коллекции таблицы по имени файла
+            var matchedItem = _rawMods.FirstOrDefault(x => x.FileName == fileName);
+            if (matchedItem == null) continue;
+
+            string technicalId = matchedItem.TechnicalModId;
+            string? hash = null;
+
+            // ОПТИМИЗАЦИЯ: Если этот мод по своему TechnicalModId уже сканировался — НЕ считаем хэш заново!
+            if (!string.IsNullOrEmpty(technicalId) && existingCacheMap.TryGetValue(technicalId, out var cachedMod) &&
+                !string.IsNullOrEmpty(cachedMod.FileHash))
+            {
+                hash = cachedMod.FileHash;
+            }
+            else
+            {
+                // Мода нет в кэше — вычисляем SHA-512 честно с диска
+                hash = await hashCalculator.CalculateSha512Async(jarPath);
+            }
 
             if (!string.IsNullOrEmpty(hash))
             {
                 hashesList.Add(hash);
-                // Ищем соответствующий элемент в нашей оперативной коллекции таблицы
-                var matchedItem = _rawMods.FirstOrDefault(x => x.DisplayName == fileName);
-                if (matchedItem != null)
+
+                if (!string.IsNullOrEmpty(technicalId))
                 {
-                    hashToModItemMap[hash] = matchedItem;
+                    fileToHashMap[technicalId] = hash; // Запоминаем хэш для последующего сохранения
                 }
+
+                hashToModItemMap[hash] = matchedItem;
             }
         }
 
-        // 2. Отправляем ПЕРВЫЙ (массовый) запрос по хэшам
+        // 2. Отправляем ПЕРВЫЙ (массовый) запрос по хэшам (передаем .ToArray() как в вашем оригинале)
         var apiResults = await apiService.CheckCompatibilityAsync(
             hashesList.ToArray(),
             CurrentVersion,
             _profile.Loader);
 
-
         // Список модов, которые Modrinth НЕ узнал по хэшу (моды со сторонних сайтов)
         var unrecognizedMods = new List<ModTableItemViewModel>();
+
+        // Карта для сбора прямых ссылок на скачивание, полученных из API
+        var modDownloadUrls = new Dictionary<string, string?>();
 
         // Разносим результаты первого этапа
         foreach (var modItem in _rawMods)
@@ -160,6 +183,11 @@ public partial class WorkspaceViewModel : ObservableObject
             {
                 // Хэш совпал! Идеальный случай.
                 modItem.Comment = networkStatus.StatusText;
+
+                if (!string.IsNullOrEmpty(modItem.TechnicalModId))
+                {
+                    modDownloadUrls[modItem.TechnicalModId] = networkStatus.DownloadUrl;
+                }
             }
             else
             {
@@ -171,8 +199,7 @@ public partial class WorkspaceViewModel : ObservableObject
         // 3. ПЛАН Б: Текстовый поиск по Mod ID для измененных файлов
         foreach (var dirtyMod in unrecognizedMods)
         {
-            // Берем чистый технический ID (например, "sodium"), полученный нами из jar-манифеста
-            string technicalId = dirtyMod.TechnicalModId; // Добавьте это свойство в модель строки, если его там нет
+            string technicalId = dirtyMod.TechnicalModId;
 
             if (string.IsNullOrEmpty(technicalId) || technicalId == "unknown")
             {
@@ -180,8 +207,6 @@ public partial class WorkspaceViewModel : ObservableObject
                 continue;
             }
 
-            // Делаем точечный запрос по ID проекта на Modrinth
-            // Метод CheckCompatibilityBySlugAsync мы добавим в сетевой сервис ниже
             var backupResult = await apiService.CheckCompatibilityBySlugAsync(
                 technicalId,
                 CurrentVersion,
@@ -191,13 +216,53 @@ public partial class WorkspaceViewModel : ObservableObject
             {
                 // Мод найден по текстовому ID! 
                 dirtyMod.Comment = backupResult.StatusText + " ⚠️ (Файл изменен/кастомный)";
+                modDownloadUrls[technicalId] = backupResult.DownloadUrl; // Запоминаем ссылку по ID мода
             }
             else
             {
-                // Если мода вообще нет на Modrinth (эксклюзив с китайских сайтов или RuMinecraft)
+                // Если мода вообще нет на Modrinth
                 dirtyMod.Comment = "⚪ Отсутствует на Modrinth (Будет скопирован как есть)";
+                modDownloadUrls[technicalId] = null;
             }
         }
+
+        // ====================================================================
+        // ЗАМЕЧАНИЕ 1: ПАТТЕРН UPSERT И ФИЗИЧЕСКОЕ СОХРАНЕНИЕ В JSON
+        // Наполняем обновленный список модов текущими результатами и пишем на диск
+        // ====================================================================
+        var updatedModsList = new List<SavedModMetadata>();
+
+        foreach (var modItem in _rawMods)
+        {
+            string technicalId = modItem.TechnicalModId;
+
+            updatedModsList.Add(
+                new SavedModMetadata
+                {
+                    FileName = modItem.FileName, // Оставляем физическое имя файла для Этапа 2
+                    ModId = technicalId, // Главный технический ID ключа
+                    DisplayName = modItem.DisplayName,
+                    FileHash = !string.IsNullOrEmpty(technicalId)
+                        ? fileToHashMap.GetValueOrDefault(technicalId, string.Empty)
+                        : string.Empty,
+                    ApiStatusComment = modItem.Comment,
+                    DownloadUrl = !string.IsNullOrEmpty(technicalId)
+                        ? modDownloadUrls.GetValueOrDefault(technicalId)
+                        : null
+                });
+        }
+
+        try
+        {
+            // Перезаписываем коллекцию и сохраняем обновленный profile.json
+            currentProfile.CachedMods = updatedModsList;
+            configService.SaveProfile(currentProfile);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ConfigService] Ошибка сохранения результатов API: {ex.Message}");
+        }
+        // ====================================================================
 
         // 4. Обновляем DataGrid на экране
         ModItemsView.Refresh();
@@ -209,7 +274,7 @@ public partial class WorkspaceViewModel : ObservableObject
         if (App.Current?.ApplicationLifetime is not
             Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop) return;
 
-        var wizardVm = new MigrationWizardViewModel(SelectedTargetVersion, SelectedTargetLoader);
+        var wizardVm = new MigrationWizardViewModel(_profile.Id, SelectedTargetVersion, SelectedTargetLoader);
         var wizardWindow = new MigrationWizardWindow { DataContext = wizardVm };
 
         await wizardWindow.ShowDialog(desktop.MainWindow!);
@@ -226,6 +291,7 @@ public partial class WorkspaceViewModel : ObservableObject
 /// </summary>
 public partial class ModTableItemViewModel : ObservableObject
 {
+    public string FileName { get; }
     public string DisplayName { get; }
     public string TypeDescription { get; }
 
@@ -243,12 +309,14 @@ public partial class ModTableItemViewModel : ObservableObject
     public string ShortComment => Comment.Length > 30 ? Comment[..27] + "..." : Comment;
 
     public ModTableItemViewModel(
+        string fileName,
         string displayName,
         string typeDescription,
         string comment,
         string parentGroupName,
         bool isMainMod)
     {
+        FileName = fileName;
         DisplayName = displayName;
         TypeDescription = typeDescription;
         Comment = comment;
